@@ -1,0 +1,76 @@
+/* Add to src/main/resources/static/css/style.css */
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.sidebar {
+    background: linear-gradient(135deg, #2c3e50, #1a1a2e);
+    color: white;
+    min-height: 100vh;
+    box-shadow: 3px 0 10px rgba(0,0,0,0.1);
+}
+
+.sidebar .nav-link {
+    color: rgba(255,255,255,0.8);
+    border-left: 3px solid transparent;
+    transition: all 0.3s;
+}
+
+.sidebar .nav-link:hover, 
+.sidebar .nav-link.active {
+    color: white;
+    background: rgba(255,255,255,0.1);
+    border-left: 3px solid #4e73df;
+}
+
+.sidebar .nav-link i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+}
+
+.card {
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.3s;
+    margin-bottom: 20px;
+    border: none;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-card {
+    color: white;
+    text-align: center;
+    padding: 20px;
+}
+
+.stat-card i {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+.recent-expense-row {
+    transition: background-color 0.2s;
+}
+
+.recent-expense-row:hover {
+    background-color: #f8f9fa;
+}
+
+.expense-row {
+    transition: background-color 0.2s;
+}
+
+.expense-row:hover {
+    background-color: #f8f9fa;
+}

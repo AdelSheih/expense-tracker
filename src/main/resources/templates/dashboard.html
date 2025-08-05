@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Expense Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar {
+            background: linear-gradient(135deg, #2c3e50, #1a1a2e);
+            color: white;
+            min-height: 100vh;
+            box-shadow: 3px 0 10px rgba(0,0,0,0.1);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            color: white;
+            background: rgba(255,255,255,0.1);
+            border-left: 3px solid #4e73df;
+        }
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            margin-bottom: 20px;
+            border: none;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .stat-card {
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        .stat-card i {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        .recent-expense-row {
+            transition: background-color 0.2s;
+        }
+        .recent-expense-row:hover {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 col-lg-2 d-md-block sidebar collapse bg-dark">
+                <div class="pt-3">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-money-bill-wave fa-3x mb-2"></i>
+                        <h3>Expense Tracker</h3>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/dashboard">
+                                <i class="fas fa-tachometer-alt"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/expenses">
+                                <i class="fas fa-list"></i> Expenses
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/expenses/new">
+                                <i class="fas fa-plus-circle"></i> Add Expense
+                            </a>
+                        </li>
+                        <li class="nav-item mt-4">
+                            <a class="nav-link" href="/logout">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-10 ms-sm-auto p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="fas fa-tachometer-alt me-2"></i> Dashboard</h2>
+                    <span class="text-muted">Welcome, <span  sec:authentication="name">User</span></span>
+                </div>
+                
+                <!-- Summary Cards -->
+                <div class="row">
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card stat-card bg-primary">
+                            <div class="card-body">
+                                <i class="fas fa-wallet"></i>
+                                <h5 class="card-title">Total Expenses</h5>
+                                <p class="card-text display-5" th:text="'$' + ${#numbers.formatDecimal(totalExpenses, 1, 2)}">$0.00</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card stat-card bg-success">
+                            <div class="card-body">
+                                <i class="fas fa-calendar-alt"></i>
+                                <h5 class="card-title">This Month</h5>
+                                <p class="card-text display-5" th:text="'$' + ${#numbers.formatDecimal(monthlyExpenses, 1, 2)}">$0.00</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card stat-card bg-info">
+                            <div class="card-body">
+                                <i class="fas fa-chart-line"></i>
+                                <h5 class="card-title">Avg Daily</h5>
+                                <p class="card-text display-5" th:text="'$' + ${#numbers.formatDecimal(avgDaily, 1, 2)}">$0.00</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card stat-card bg-warning">
+                            <div class="card-body">
+                                <i class="fas fa-star"></i>
+                                <h5 class="card-title">Highest Category</h5>
+                                <p class="card-text display-5" th:text="${highestCategory}">N/A</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Charts -->
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-white">
+                                <h5 class="card-title mb-0"><i class="fas fa-chart-pie me-2"></i>Expenses by Category</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="categoryChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-white">
+                                <h5 class="card-title mb-0"><i class="fas fa-chart-bar me-2"></i>Monthly Expenses</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="monthlyChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Expenses -->
+                <div class="card">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0"><i class="fas fa-history me-2"></i>Recent Expenses</h5>
+                        <a href="/expenses" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Description</th>
+                                        <th>Amount</th>
+                                        <th>Category</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="expense : ${recentExpenses}" class="recent-expense-row">
+                                        <td th:text="${expense.description}">Lunch</td>
+                                        <td th:text="'$' + ${#numbers.formatDecimal(expense.amount, 1, 2)}">$12.50</td>
+                                        <td>
+                                            <span class="badge" th:with="category=${expense.category.name()}">
+                                                <th:block th:switch="${category}">
+                                                    <span th:case="'FOOD'" class="bg-danger" th:text="${category}"></span>
+                                                    <span th:case="'TRANSPORT'" class="bg-primary" th:text="${category}"></span>
+                                                    <span th:case="'HOUSING'" class="bg-success" th:text="${category}"></span>
+                                                    <span th:case="'ENTERTAINMENT'" class="bg-warning" th:text="${category}"></span>
+                                                    <span th:case="'HEALTH'" class="bg-info" th:text="${category}"></span>
+                                                    <span th:case="*" class="bg-secondary" th:text="${category}"></span>
+                                                </th:block>
+                                            </span>
+                                        </td>
+                                        <td th:text="${#temporals.format(expense.date, 'MMM dd, yyyy')}">Jan 01, 2023</td>
+                                        <td>
+                                            <a th:href="@{/expenses/edit/{id}(id=${expense.id})}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a th:href="@{/expenses/delete/{id}(id=${expense.id})}" 
+                                               class="btn btn-sm btn-outline-danger ms-1">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script th:inline="javascript">
+        // Parse JSON data from Spring
+        const categoryData = /*[[${categoryData}]]*/ '[]';
+        const monthlyData = /*[[${monthlyData}]]*/ '[]';
+
+        // Parse JSON strings to JavaScript objects
+        const categoryJson = JSON.parse(categoryData);
+        const monthlyJson = JSON.parse(monthlyData);
+
+        // Prepare data for Category Chart
+        const categoryLabels = categoryJson.map(item => item.category);
+        const categoryValues = categoryJson.map(item => parseFloat(item.total));
+
+        // Category Chart
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        if (categoryLabels.length > 0) {
+            new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: categoryLabels,
+                    datasets: [{
+                        data: categoryValues,
+                        backgroundColor: [
+                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                            '#9966FF', '#FF9F40', '#8AC926', '#1982C4'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: $${context.raw.toFixed(2)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+            categoryCtx.fillText('No data available', 100, 100);
+        }
+        
+        // Prepare data for Monthly Chart
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        
+        // Create labels for all months (fill missing months with 0)
+        const allMonths = Array.from({length: 12}, (_, i) => monthNames[i]);
+        const monthlyValues = Array(12).fill(0);
+        
+        monthlyJson.forEach(item => {
+            const monthIndex = parseInt(item.month) - 1;
+            if (monthIndex >= 0 && monthIndex < 12) {
+                monthlyValues[monthIndex] = parseFloat(item.total);
+            }
+        });
+        
+        // Monthly Chart
+        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+        if (monthlyJson.length > 0) {
+            new Chart(monthlyCtx, {
+                type: 'bar',
+                data: {
+                    labels: allMonths,
+                    datasets: [{
+                        label: 'Monthly Spending',
+                        data: monthlyValues,
+                        backgroundColor: '#36A2EB',
+                        borderColor: '#1E88E5',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value;
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Total: $${context.raw.toFixed(2)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+            monthlyCtx.fillText('No data available', 100, 100);
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
